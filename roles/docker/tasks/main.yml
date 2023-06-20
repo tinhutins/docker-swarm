@@ -1,0 +1,4 @@
+---
+- name: Installing docker
+  import_tasks: install_docker.yml
+  tags: [ 'never', 'install_docker' ]

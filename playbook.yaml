@@ -1,0 +1,23 @@
+- name: Install docker
+  hosts: all
+  gather_facts: true
+  roles:
+    - { role: docker }
+  become: yes
+  become_user: root
+
+- name: Install swarm
+  hosts: all
+  gather_facts: true
+  roles:
+    - { role: swarm }
+  become: yes
+  become_user: root
+
+- name: Install tools
+  hosts: all
+  gather_facts: true
+  roles:
+    - { role: tools }
+  become: yes
+  become_user: root

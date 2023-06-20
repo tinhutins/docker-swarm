@@ -1,0 +1,6 @@
+{% for server in groups['managers'] %}
+{{hostvars[server]['ansible_facts']['default_ipv4']['address']}} {{hostvars[server]['ansible_facts']['hostname']}}
+{% endfor %}
+{% for server in groups['workers'] %}
+{{hostvars[server]['ansible_facts']['default_ipv4']['address']}} {{hostvars[server]['ansible_facts']['hostname']}}
+{% endfor %}

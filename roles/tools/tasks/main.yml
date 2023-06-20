@@ -1,0 +1,4 @@
+---
+- name: Installing tools
+  import_tasks: install_tools.yml
+  tags: [ 'never', 'install_tools' ]
