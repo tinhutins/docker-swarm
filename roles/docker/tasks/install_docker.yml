@@ -2,7 +2,7 @@
   apt_key:
     url: "{{ docker_repo_key }} "
     state: present
-
+    
 - name: Add repository
   apt_repository:
     repo: "{{ docker_repo }}"
@@ -14,7 +14,7 @@
     state: latest
     update_cache: yes
     #cache_valid_time: 3600
-  with_items: "{{ docker_packages}}"
+  with_items: "{{ docker_packages }}"
 
 - name: start docker
   service:
