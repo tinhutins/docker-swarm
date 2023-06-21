@@ -1,0 +1,5 @@
+---
+- name: Installing haproxy LB
+  import_tasks: install_haproxy.yml
+  tags: [ 'never', 'install_haproxy' ]
+  when: inventory_hostname in groups['proxy_nodes'][0]

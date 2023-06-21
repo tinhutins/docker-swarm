@@ -1,0 +1,46 @@
+version: '2.2'
+
+services:
+  haproxy:
+    image: haproxy:{{ docker_haproxy_version }}
+    container_name: haproxy
+    environment:
+      - TZ=Europe/Zagreb
+    volumes:
+      - type: bind
+        source: /root/haproxy/haproxy.cfg
+        target: /usr/local/etc/haproxy/haproxy.cfg
+        read_only: yes
+    networks:
+      default:
+      docker_internal:
+        aliases:
+          - {{ groups['proxy_nodes'] | sort | first }}.tinotest.com
+    ports:
+      - 80:80/tcp
+    logging:
+      driver: journald
+      options:
+        tag: docker-haproxy
+    mem_limit: 512m
+    restart: always
+
+networks:
+  docker_internal:
+    name: internal
+    internal: true
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/24
+  default:
+    name: external
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.40.0.0/24

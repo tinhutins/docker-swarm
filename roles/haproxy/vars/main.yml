@@ -1,0 +1,17 @@
+---
+# vars file for roles/haproxy
+
+# Enter packages version:
+# docker
+docker_ce_version: docker-ce=5:23.0.1-1~ubuntu.22.04~jammy
+docker_compose_version: v2.16.0
+docker_haproxy_version: 2.4.22-alpine
+# pip
+pip_docker_version: 6.0.1
+pip_docker_compose_version: 1.29.2
+pip_pyyaml_version: 5.4.1
+
+
+reboot_connect_timeout: 5
+reboot_post_reboot_delay: 15
+reboot_timeout: 600

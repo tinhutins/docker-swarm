@@ -1,0 +1,54 @@
+# If you already have an haproxy.cfg file, you can probably leave the
+# global and defaults section as-is, but you might need to increase the
+# timeouts so that long-running Jenkins CLI commands will work.
+
+global
+    maxconn 4096
+    log stdout local0 debug
+
+defaults
+   log global
+   option httplog
+   option dontlognull
+   #option forwardfor
+   maxconn 20
+   timeout connect 5s
+   timeout client 5m
+   timeout server 5m
+
+frontend http-in
+  log stdout format raw local0 debug
+  bind *:80
+  mode http
+  stats uri /haproxy?stats
+
+  default_backend http_back
+  
+  #acl prefixed-with-kibana path_beg /kibana/
+  #acl prefixed-with-kibana path /kibana
+
+  #http-request redirect code 301 prefix /jenkins unless prefixed-with-jenkins
+  #redirect scheme https if !{ ssl_fc } # Redirect http requests to https
+
+  #use_backend kibana if prefixed-with-kibana
+
+  #http-request redirect code 301 prefix /jenkins unless prefixed-with-jenkins
+  #redirect scheme https if !{ ssl_fc } # Redirect http requests to https
+
+#backend kibana
+#  log stdout format raw local0 debug
+#  mode http
+#  http-request set-path %[path,regsub(^/kibana/?,/)]
+#  http-request add-header X-Forwarded-Proto https if { ssl_fc }
+# servers loop here like below one
+
+# Configure HAProxy to route requests to swarm nodes on port 8080
+backend http_back
+   balance roundrobin
+   mode http
+   {% for server in groups['managers'] %}
+   server {{hostvars[server]['ansible_facts']['hostname']}} {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000 check
+   {% endfor %}
+   {% for server in groups['workers'] %}
+   server {{hostvars[server]['ansible_facts']['hostname']}} {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000 check
+   {% endfor %}
