@@ -1,0 +1,21 @@
+version: '3.3'
+
+services:
+  nginx:
+    image: nginx:1.23.3
+    container_name: nginx
+    environment:
+      - TZ=Europe/Zagreb
+    volumes:
+      - type: bind
+        source: /root/nginx/etc/nginx.conf
+        target: /etc/nginx/nginx.conf
+        read_only: yes
+      - type: bind
+        source: /root/nginx/etc/conf.d
+        target: /etc/nginx/conf.d
+        read_only: yes
+    ports:
+      - 80:80/tcp
+    #deploy:
+     # replicas: 3

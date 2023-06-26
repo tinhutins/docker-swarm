@@ -1,4 +1,3 @@
----
 - name: Set frontend proxy servers hosts file
   template:
     src: hosts_file.j2
@@ -47,8 +46,8 @@
     post_reboot_delay: "{{ reboot_post_reboot_delay }}"
     reboot_timeout: "{{ reboot_timeout }}"
 
-# Docker/Podman
-# Only specific versions of podman works with ceph versions more on https://docs.ceph.com/en/latest/cephadm/compatibility/
+#Docker/Podman
+#Only specific versions of podman works with ceph versions more on https://docs.ceph.com/en/latest/cephadm/compatibility/
 - name: Install container engine
   block:
     - name: Install docker
@@ -62,7 +61,7 @@
 
         - name: Add specified repository into sources list
           ansible.builtin.apt_repository:
-            repo: "deb [arch={{ arch.stdout }} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable"
+            repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable"
             state: present
             filename: docker
 
@@ -72,16 +71,10 @@
             state: directory
             mode: '0700'
 
-        - name: Create docker containers directory
-          file:
-            path: /root/haproxy
-            state: directory
-            mode: '0700'
-
         - name: Copy docker-compose configuration
           ansible.builtin.template:
             src: "docker-compose.j2"
-            dest: "/root/haproxy/docker-compose.yml"
+            dest: "/root/docker-compose.yml"
             owner: root
             group: root
             mode: u=rw,g=rw,o=r
@@ -117,17 +110,6 @@
             state: present
             update_cache: yes
 
-        - name: Get running containers
-          docker_host_info:
-            containers: yes
-          register: docker_info
-
-        - name: Destroy stopped containers
-          docker_container:
-            name: "{{ item }}"
-            state: absent
-          loop: "{{ docker_info.containers | map(attribute='Id') | list }}"
-
     - name: Install podman
       when: ansible_facts['distribution_version'] is version('22.04', '>')
       block:
@@ -144,37 +126,41 @@
     post_reboot_delay: "{{ reboot_post_reboot_delay }}"
     reboot_timeout: "{{ reboot_timeout }}"
 
-# HAProxy frontend proxy
-- name: Gather haproxy upstream facts
+# Nginx frontend proxy
+- name: Gather nginx upstream facts
   setup:
   delegate_to: "{{item}}"
-  delegate_facts: true
+  delegate_facts: True
   with_items:
-    - "{{groups ['managers']}}"
+    - "{{groups['managers']}}"
     - "{{groups['workers']}}"
-  ignore_unreachable: true
-  tags: haproxy_config_update
 
-- name: Copy haproxy configuration from templates
+- name: Create nginx directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /root/nginx/ssl
+    - /root/nginx/etc/
+    - /root/nginx/etc/conf.d
+
+- name: Copy nginx configurations from templates
   template:
-    src: "haproxy-config.j2"
-    dest: "/root/haproxy/haproxy.cfg"
+    src: "{{ item.src }}.j2"
+    dest: "/root/nginx/{{ item.dest}}.conf"
     owner: root
     group: root
     mode: '0755'
+  loop:
+    - { src: 'nginx-config', dest: 'etc/nginx' }
+    - { src: 'conf-test-swarm-app', dest: 'etc/conf.d/conf-test-swarm-app' }
 
-- name: Create and start haproxy container
+- name: Create and start nginx container
   community.docker.docker_compose:
-    project_src: /root/haproxy
+    project_src: /root
     services:
-      - haproxy
+      - nginx
     state: present
   register: output
-
-- name: Restart haproxy container
-  community.docker.docker_compose:
-    project_src: /root/haproxy
-    services:
-      - haproxy
-    restarted: true
-  tags: ['never', 'haproxy_config_update']
+  

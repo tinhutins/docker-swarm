@@ -1,0 +1,50 @@
+server {
+
+        listen 80;
+
+        server_name docker-swarm-app.tinotest.com;
+
+        client_max_body_size 134217728;
+
+        access_log "/var/log/nginx/test_swarm_proxy_access_log";
+        error_log "/var/log/nginx/test_swarm_proxy_error_log";
+
+
+        location / {
+                proxy_read_timeout 60;
+                #proxy_pass http://web:8000;
+                proxy_pass  http://my-app_web;
+                proxy_set_header Host             $host;
+                proxy_set_header X-Real-IP        $remote_addr;
+                proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+                access_log off;
+
+        }
+
+        location @fallback {
+                proxy_read_timeout 60;
+                #proxy_pass http://web:8000;
+                proxy_pass  http://my-app_web;
+                proxy_set_header Host             $host;
+                proxy_set_header X-Real-IP        $remote_addr;
+                proxy_set_header X-Forwarded-For  $proxy_add_x_forwarded_for;
+                access_log off;
+
+        }
+
+        location ~ ^/(.*\.(ac3|avi|bmp|bz2|cue|dat|doc|docx|dts|exe|flv|gz|img|iso|mkv|mp3|mp4|mpeg|mpg|ogg|pdf|ppt|pptx|qt|rar|rm|swf|tar|tgz|wav|xls|xlsx|zip))$ {
+                try_files $uri @fallback;
+        }
+
+
+        add_header X-Powered-By docker-swarm;
+}
+
+upstream my-app_web {
+   {% for server in groups['managers'] %}
+     {{hostvars[server]['ansible_facts']['hostname']}} {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000
+   {% endfor %}
+   {% for server in groups['workers'] %}
+     {{hostvars[server]['ansible_facts']['hostname']}} {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000
+   {% endfor %}
+}

@@ -1,0 +1,5 @@
+---
+- name: Installing nginx LB
+  import_tasks: install_nginx.yml
+  tags: [ 'never', 'install_nginx' ]
+  when: inventory_hostname in groups['nginx_nodes'][0]
