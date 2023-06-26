@@ -42,9 +42,9 @@ server {
 
 upstream my-app_web {
    {% for server in groups['managers'] %}
-     {{hostvars[server]['ansible_facts']['hostname']}} {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000
+     server {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000;
    {% endfor %}
    {% for server in groups['workers'] %}
-     {{hostvars[server]['ansible_facts']['hostname']}} {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000
+     server {{hostvars[server]['ansible_facts']['default_ipv4']['address']}}:8000;
    {% endfor %}
 }
